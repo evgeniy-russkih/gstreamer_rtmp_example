@@ -1,16 +1,16 @@
-# sdl example
-add_subdirectory(sdl)
-
 find_package(fmt CONFIG)
 find_package(spdlog CONFIG)
-find_package(docopt CONFIG)
 
-# Generic test that uses conan libs
-add_executable(intro main.cpp)
+add_subdirectory(relay)
+
+add_executable(example main.cpp)
+
 target_link_libraries(
-  intro
-  PRIVATE project_options
-          project_warnings
-          docopt::docopt
-          fmt::fmt
-          spdlog::spdlog)
+        example
+        PUBLIC
+        relay
+        PRIVATE project_options
+        project_warnings
+        fmt::fmt
+        spdlog::spdlog
+)
