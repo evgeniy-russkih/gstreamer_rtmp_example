@@ -42,8 +42,10 @@ RUN update-alternatives --install /usr/bin/gcc gcc $(which gcc-${GCC_VER}) 100
 RUN update-alternatives --install /usr/bin/g++ g++ $(which g++-${GCC_VER}) 100
 
 RUN apt-get install -y libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgstreamer-plugins-bad1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-libav gstreamer1.0-doc gstreamer1.0-tools gstreamer1.0-x gstreamer1.0-alsa gstreamer1.0-gl gstreamer1.0-gtk3 gstreamer1.0-qt5 gstreamer1.0-pulseaudio
+RUN apt-get install -y curl
 
-RUN apt-get install -y git
+RUN curl https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/1080/Big_Buck_Bunny_1080_10s_5MB.mp4 --output test.mp4
+
 # Add current cmake/ccmake, from Kitware
 ARG CMAKE_URL="https://apt.kitware.com/ubuntu/"
 ARG CMAKE_PKG=${VARIANT}
@@ -63,5 +65,12 @@ RUN apt-get autoremove -y && apt-get clean && \
 ENV CC=${CC:-"gcc"}
 ENV CXX=${CXX:-"g++"}
 
+# compile and run
+RUN apt-get install -y git
+ADD "https://www.random.org/cgi-bin/randbyte?nbytes=10&format=h" skipcache
+RUN git clone https://github.com/evgeniy-russkih/gstreamer_rtmp_example.git gstreamer_rtmp_example
+ADD "https://www.random.org/cgi-bin/randbyte?nbytes=10&format=h" skipcache
+RUN cd /gstreamer_rtmp_example && mkdir build && cmake -S . -B ./build && cmake --build ./build
 
-CMD ["/bin/bash"]
+# CMD ["/bin/bash"]
+ENTRYPOINT ["/gstreamer_rtmp_example/build/src/example"]

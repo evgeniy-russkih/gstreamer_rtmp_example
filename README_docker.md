@@ -1,20 +1,8 @@
 ## Docker Instructions
 
-If you have [Docker](https://www.docker.com/) installed, you can run this
-in your terminal, when the Dockerfile is inside the .devconatiner directory:
 
 ```bash
 docker build -f ./.devcontainer/Dockerfile --tag=rtmptest:latest .
-docker run -it \
-	-v absolute_path_on_host_machine:absolute_path_in_guest_container \
-	rtmptest:latest
+docker run rtmptest:latest
+docker run -it --network="host" rtmptest:latest test.mp4 rtmp://127.0.0.1:1935/live/test
 ```
-
-You can configure and build [as directed above](#build) using these commands:
-
-```bash
-/starter_project# mkdir build
-/starter_project# cmake -S . -B ./build
-/starter_project# cmake --build ./build
-```
-

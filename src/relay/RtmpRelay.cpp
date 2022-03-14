@@ -19,10 +19,10 @@ static void cb_new_pad(GstElement *element, GstPad *pad, gpointer data)
   GstElement *other = static_cast<GstElement *>(data);
 
   name = gst_pad_get_name(pad);
-  g_print("A new pad %s was created for %s\n", name, gst_element_get_name(element));
+  spdlog::info("A new pad %s was created for %s\n", name, gst_element_get_name(element));
   g_free(name);
 
-  g_print("element %s will be linked to %s\n", gst_element_get_name(element), gst_element_get_name(other));
+  spdlog::info("element %s will be linked to %s\n", gst_element_get_name(element), gst_element_get_name(other));
   gst_element_link(element, other);
 }
 
@@ -54,7 +54,7 @@ void RtmpRelay::initialize(const std::string &input_file, const std::string &out
   if (!_pipeline || !_source || !_qtdemux || !_h264parse || !_flvmux || !_rtmpsink || !_clockoverlay || !_decodebin
       || !_videoconvert || !_x264enc) {
     std::string error = "Not created.\n";
-    g_printerr(error.c_str());
+    spdlog::error(error);
     throw std::runtime_error(error);
   }
 
@@ -74,7 +74,7 @@ void RtmpRelay::initialize(const std::string &input_file, const std::string &out
 
   if (gst_element_link(_source, _qtdemux) != TRUE) {
     std::string error = "source link error.\n";
-    g_printerr(error.c_str());
+    spdlog::error(error);
     gst_object_unref(_pipeline);
     throw std::runtime_error(error);
   }
@@ -83,7 +83,7 @@ void RtmpRelay::initialize(const std::string &input_file, const std::string &out
         _videoconvert, _identity, _textoverlay, _clockoverlay, _x264enc, _h264parse, _flvmux, _rtmpsink, NULL)
       != TRUE) {
     std::string error = "rest link error.\n";
-    g_printerr(error.c_str());
+    spdlog::error(error);
     gst_object_unref(_pipeline);
     throw std::runtime_error(error);
   }
@@ -108,7 +108,7 @@ void RtmpRelay::play()
   ret = gst_element_set_state(_pipeline, GST_STATE_PLAYING);
   if (ret == GST_STATE_CHANGE_FAILURE) {
     std::string error = "Unable to set the pipeline to the playing state.\n";
-    g_printerr(error.c_str());
+    spdlog::error(error);
     gst_object_unref(_pipeline);
     throw std::runtime_error(error);
   }
@@ -140,13 +140,14 @@ void RtmpRelay::wait()
     switch (GST_MESSAGE_TYPE(msg)) {
     case GST_MESSAGE_ERROR:
       gst_message_parse_error(msg, &err, &debug_info);
-      g_printerr("Error received from element %s: %s\n", GST_OBJECT_NAME(msg->src), err->message);
-      g_printerr("Debugging information: %s\n", debug_info ? debug_info : "none");
+      spdlog::error("Error received from element %s: %s\n", GST_OBJECT_NAME(msg->src), err->message);
+      spdlog::error("Debugging information: %s\n", debug_info ? debug_info : "none");
       g_clear_error(&err);
       g_free(debug_info);
+      throw std::exception();
       break;
     case GST_MESSAGE_EOS:
-      g_print("End-Of-Stream reached.\n");
+      spdlog::info("End-Of-Stream reached.\n");
       if (gst_element_seek(_pipeline,
             1.0,
             GST_FORMAT_TIME,
@@ -157,14 +158,15 @@ void RtmpRelay::wait()
             GST_CLOCK_TIME_NONE)
           != TRUE) {
         std::string error = "seek failed\n";
-        g_print(error.c_str());
+        spdlog::info(error);
         throw std::runtime_error(error);
       }
 
       break;
     default:
       /* We should not reach here because we only asked for ERRORs and EOS */
-      g_printerr("Unexpected message received.\n");
+      spdlog::error("Unexpected message received.\n");
+      throw std::exception();
       break;
     }
     gst_message_unref(msg);
@@ -174,10 +176,7 @@ void RtmpRelay::wait()
   gst_object_unref(bus);
 }
 
-void RtmpRelay::update_text_overlay(const std::string &val)
-{
-  g_object_set(_textoverlay, "text", val.c_str(), NULL);
-}
+void RtmpRelay::update_text_overlay(const std::string &val) { g_object_set(_textoverlay, "text", val.c_str(), NULL); }
 
 
 #pragma clang diagnostic pop
